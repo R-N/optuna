@@ -772,6 +772,7 @@ def _calculate_weights_below_for_multi_objective(
 ) -> np.ndarray:
     loss_vals = []
     feasible_mask = np.ones(len(below_trials), dtype=bool)
+    n_direction = len(study.directions)
     for i, trial in enumerate(below_trials):
         # Hypervolume contributions are calculated only using feasible trials.
         if constraints_func is not None:
@@ -779,7 +780,18 @@ def _calculate_weights_below_for_multi_objective(
                 feasible_mask[i] = False
                 continue
         values = []
-        for value, direction in zip(trial.values, study.directions):
+        trial_values = trial.values
+        if not trial_values:
+            trial_values = [float("inf")] * n_direction
+        n_values = len(trial_values)
+        if n_values < n_direction:
+            trial_values = [
+                *trial_values, 
+                ([float("inf")] * (n_direction - n_values))
+            ]
+        for value, direction in zip(trial_values, study.directions):
+            if value is None:
+                value = float("inf")
             if direction == StudyDirection.MINIMIZE:
                 values.append(value)
             else:
