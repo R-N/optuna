@@ -769,6 +769,7 @@ def _calculate_weights_below_for_multi_objective(
     study: Study,
     below_trials: list[FrozenTrial],
     constraints_func: Callable[[FrozenTrial], Sequence[float]] | None,
+    pruned_value=1.0/1e-9,
 ) -> np.ndarray:
     loss_vals = []
     feasible_mask = np.ones(len(below_trials), dtype=bool)
@@ -782,16 +783,16 @@ def _calculate_weights_below_for_multi_objective(
         values = []
         trial_values = trial.values
         if not trial_values:
-            trial_values = [float("inf")] * n_direction
+            trial_values = [pruned_value] * n_direction
         n_values = len(trial_values)
         if n_values < n_direction:
             trial_values = [
                 *trial_values, 
-                ([float("inf")] * (n_direction - n_values))
+                ([pruned_value] * (n_direction - n_values))
             ]
         for value, direction in zip(trial_values, study.directions):
             if value is None:
-                value = float("inf")
+                value = pruned_value
             if direction == StudyDirection.MINIMIZE:
                 values.append(value)
             else:
